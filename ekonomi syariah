@@ -1,0 +1,231 @@
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Paragraph, HRFlowable
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib import colors
+from reportlab.pdfgen import canvas
+
+# Canvas khusus untuk menambahkan nomor halaman otomatis di bagian footer
+class NumberedCanvas(canvas.Canvas):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._saved_page_states = []
+
+    def showPage(self):
+        self._saved_page_states.append(dict(self.__dict__))
+        self._startPage()
+
+    def save(self):
+        num_pages = len(self._saved_page_states)
+        for state in self._saved_page_states:
+            self.__dict__.update(state)
+            self.draw_page_number(num_pages)
+            super().showPage()
+        super().save()
+
+    def draw_page_number(self, page_count):
+        self.setFont("Helvetica", 8)
+        self.setFillColor(colors.HexColor('#666666'))
+        # Garis pembatas footer
+        self.setLineWidth(0.5)
+        self.setStrokeColor(colors.HexColor('#CCCCCC'))
+        self.line(40, 35, 572, 35)
+        # Teks Footer
+        page_text = f"Buku Panduan Ekonomi Syariah | Halaman {self._pageNumber} dari {page_count}"
+        self.drawRightString(572, 22, page_text)
+
+
+def generate_pdf():
+    pdf_path = "Ekonomi_Syariah_Lengkap.pdf"
+    
+    doc = SimpleDocTemplate(
+        pdf_path,
+        pagesize=letter,
+        rightMargin=40, leftMargin=40,
+        topMargin=45, bottomMargin=50
+    )
+    
+    styles = getSampleStyleSheet()
+    
+    # Style Judul Utama
+    title_style = ParagraphStyle(
+        'DocTitle',
+        parent=styles['Normal'],
+        fontName='Helvetica-Bold',
+        fontSize=20,
+        leading=24,
+        alignment=1, # Center
+        textColor=colors.HexColor('#1B4332'),
+        spaceAfter=6
+    )
+
+    subtitle_style = ParagraphStyle(
+        'DocSubTitle',
+        parent=styles['Normal'],
+        fontName='Helvetica',
+        fontSize=10.5,
+        leading=14,
+        alignment=1, # Center
+        textColor=colors.HexColor('#4A4A4A'),
+        spaceAfter=12
+    )
+    
+    # Style Bab Utama
+    h1_style = ParagraphStyle(
+        'Heading1_Custom',
+        parent=styles['Normal'],
+        fontName='Helvetica-Bold',
+        fontSize=13,
+        leading=17,
+        textColor=colors.HexColor('#1B4332'),
+        spaceBefore=14,
+        spaceAfter=6,
+        keepWithNext=True
+    )
+
+    # Style Sub-Bab
+    h2_style = ParagraphStyle(
+        'Heading2_Custom',
+        parent=styles['Normal'],
+        fontName='Helvetica-Bold',
+        fontSize=10,
+        leading=14,
+        textColor=colors.HexColor('#2D6A4F'),
+        spaceBefore=10,
+        spaceAfter=4,
+        keepWithNext=True
+    )
+
+    # Style Isi Teks (Justify)
+    body_style = ParagraphStyle(
+        'Body_Custom',
+        parent=styles['Normal'],
+        fontName='Helvetica',
+        fontSize=9,
+        leading=13,
+        alignment=4, # Justify
+        spaceAfter=6
+    )
+
+    # Style Kutipan Ayat / Hadis
+    quote_style = ParagraphStyle(
+        'Quote_Custom',
+        parent=styles['Normal'],
+        fontName='Helvetica-Oblique',
+        fontSize=8.5,
+        leading=12,
+        leftIndent=15,
+        rightIndent=15,
+        textColor=colors.HexColor('#2B2B2B'),
+        spaceBefore=3,
+        spaceAfter=5
+    )
+
+    story = []
+
+    # =========================================================================
+    # HEADER / TITLING
+    # =========================================================================
+    story.append(Paragraph("BUKU PANDUAN EKONOMI SYARIAH", title_style))
+    story.append(Paragraph("<b>Komprehensif: Prinsip, Dasar Hukum, Lembaga Keuangan &amp; Glosarium Akad</b>", subtitle_style))
+    story.append(HRFlowable(width="100%", thickness=1.5, color=colors.HexColor('#1B4332'), spaceAfter=12))
+
+    # =========================================================================
+    # BAB I
+    # =========================================================================
+    story.append(Paragraph("BAB I: PENDAHULUAN &amp; KONSEP DASAR", h1_style))
+    story.append(Paragraph("<b>1.1 Pengertian Ekonomi Syariah</b>", h2_style))
+    story.append(Paragraph(
+        "Ekonomi Syariah (Ekonomi Islam) adalah cabang ilmu pengetahuan sosial yang mempelajari perilaku manusia dalam memenuhi kebutuhan hidupnya yang terbatas dengan sumber daya yang terbatas, di mana seluruh proses produksi, distribusi, dan konsumsi diatur sesuai dengan kaidah, norma, dan nilai-nilai hukum Islam (Syariat). Berbeda dari sistem kapitalisme yang menekankan pemaksimalan profit materi atau sosialisme yang menekankan kepemilikan mutlak negara, Ekonomi Syariah menyeimbangkan kepemilikan individu, sosial, dan nilai keagamaan.", 
+        body_style
+    ))
+    
+    story.append(Paragraph("<b>1.2 Tujuan Utama Ekonomi Syariah (Maqashid Shariah)</b>", h2_style))
+    story.append(Paragraph("Tujuan utama ekonomi Islam adalah mencapai <b>Falah</b> (kesejahteraan hakiki dunia-akhirat) dan <b>Maslahah</b> (kebaikan publik). Menurut Imam Al-Ghazali, ekonomi Islam menjaga lima pilar utama (<i>Maqashid Shariah</i>):", body_style))
+    story.append(Paragraph("• <b>Hifdh ad-Din (Memelihara Agama):</b> Menjamin seluruh transaksi bisnis terbebas dari larangan agama.<br/>"
+                           "• <b>Hifdh an-Nafs (Memelihara Jiwa):</b> Memastikan pemenuhan kebutuhan dasar hidup (pangan, papan, kesehatan).<br/>"
+                           "• <b>Hifdh al-'Aql (Memelihara Akal):</b> Mendorong edukasi dan melarang komoditas merusak akal (alkohol/narkoba).<br/>"
+                           "• <b>Hifdh an-Nasl (Memelihara Keturunan):</b> Menjaga keberlanjutan ekonomi keluarga dan lintas generasi.<br/>"
+                           "• <b>Hifdh al-Mal (Memelihara Harta):</b> Melindungi hak milik individu, mencegah kejahatan finansial, pencurian, dan eksploitasi.", body_style))
+
+    # =========================================================================
+    # BAB II
+    # =========================================================================
+    story.append(Paragraph("BAB II: DASAR HUKUM EKONOMI SYARIAH", h1_style))
+    story.append(Paragraph("<b>2.1 Sumber Hukum Islam Utama</b>", h2_style))
+    story.append(Paragraph("<b>1. Al-Qur'an:</b>", body_style))
+    story.append(Paragraph("• <i>QS. Al-Baqarah: 275</i> — Kehalalan jual beli dan larangan riba.", quote_style))
+    story.append(Paragraph("• <i>QS. An-Nisa: 29</i> — Larangan memakan harta dengan cara batil dan keharusan kerelaan (suka sama suka).", quote_style))
+    story.append(Paragraph("• <i>QS. Al-Baqarah: 282</i> — Perintah pencatatan transaksi utang-piutang/nontunai.", quote_style))
+    story.append(Paragraph("• <i>QS. Al-Hasyr: 7</i> — Prinsip pemerataan harta agar tidak berputar di kalangan kaya saja.", quote_style))
+    
+    story.append(Paragraph("<b>2. As-Sunnah / Hadis Nabi Muhammad SAW:</b>", body_style))
+    story.append(Paragraph("• Larangan transaksi ketidakpastian: <i>'Rasulullah SAW melarang jual beli gharar.'</i> (HR. Muslim).", quote_style))
+    story.append(Paragraph("• Larangan penimbunan barang: <i>'Barangsiapa yang menimbun barang, maka ia telah berbuat dosa.'</i> (HR. Muslim).", quote_style))
+    
+    story.append(Paragraph("<b>3. Ijma' &amp; Qiyas:</b> Kesepakatan ulama serta analogi penetapan hukum pada transaksi keuangan modern.", body_style))
+
+    story.append(Paragraph("<b>2.2 Hukum Positif di Indonesia</b>", h2_style))
+    story.append(Paragraph("• <b>UU No. 21 Tahun 2008</b> tentang Perbankan Syariah.<br/>"
+                           "• <b>UU No. 19 Tahun 2008</b> tentang Surat Berharga Syariah Negara (Sukuk).<br/>"
+                           "• <b>UU No. 23 Tahun 2011</b> tentang Pengelolaan Zakat &amp; <b>UU No. 41 Tahun 2004</b> tentang Wakaf.<br/>"
+                           "• <b>Fatwa DSN-MUI:</b> Panduan teknis produk dan operasional perbankan/keuangan syariah.", body_style))
+
+    # =========================================================================
+    # BAB III
+    # =========================================================================
+    story.append(Paragraph("BAB III: PRINSIP UTAMA &amp; LARANGAN (ANTI-MAGHRIB)", h1_style))
+    story.append(Paragraph("<b>3.1 Pilar Filosofi</b>", h2_style))
+    story.append(Paragraph("1. <b>Tauhid:</b> Meyakini pemilik mutlak seluruh harta adalah Allah SWT.<br/>"
+                           "2. <b>Keadilan ('Adl):</b> Tidak boleh ada pihak yang dieksploitasi atau dirugikan.<br/>"
+                           "3. <b>Keseimbangan (Tawazun):</b> Menyeimbangkan aspek bisnis dan kebaikan sosial.<br/>"
+                           "4. <b>Kebebasan Bertanggung Jawab:</b> Bebas berinovasi selama tidak melanggar syariat.", body_style))
+
+    story.append(Paragraph("<b>3.2 Larangan Transaksi Ekonomi (MAGHRIB)</b>", h2_style))
+    story.append(Paragraph("• <b>Maysir:</b> Perjudian atau keuntungan spekulatif tanpa kerja/aset nyata.<br/>"
+                           "• <b>Aniyyah / Haram:</b> Transaksi atas objek yang dilarang zatnya (babi, judi, alkohol).<br/>"
+                           "• <b>Gharar:</b> Ketidakjelasan mengenai kualitas, kuantitas, atau waktu penyerahan barang.<br/>"
+                           "• <b>Riba:</b> Tambahan batil atas pinjaman (Riba Duyun) atau pertukaran komoditas tak seimbang (Riba Buyu').<br/>"
+                           "• <b>Ihtikar:</b> Penimbunan barang kebutuhan pokok untuk menaikkan harga pasar secara tidak wajar.<br/>"
+                           "• <b>Risywah:</b> Praktik suap-menyuap untuk memuluskan tindakan ilegal.", body_style))
+
+    # =========================================================================
+    # BAB IV
+    # =========================================================================
+    story.append(Paragraph("BAB IV: LEMBAGA-LEMBAGA EKONOMI SYARIAH", h1_style))
+    story.append(Paragraph("<b>4.1 Sektor Keuangan Komersial</b>", h2_style))
+    story.append(Paragraph("• <b>Perbankan Syariah:</b> Bank Umum Syariah (BUS), Unit Usaha Syariah (UUS), dan BPRS.<br/>"
+                           "• <b>Pasar Modal Syariah:</b> Saham Syariah, Sukuk (obligasi berbasis aset), dan Reksadana Syariah.<br/>"
+                           "• <b>Asuransi Syariah (Takaful):</b> Saling menanggung risiko (<i>risk sharing</i>) menggunakan dana hibah (<i>tabarru'</i>).<br/>"
+                           "• <b>Pegadaian Syariah (Rahn):</b> Penjaminan utang barang agunan tanpa bunga (hanya biaya simpan/Ijarah).<br/>"
+                           "• <b>BMT &amp; Fintech Syariah:</b> Lembaga keuangan mikro dan platform digital P2P lending tersertifikasi DSN-MUI.", body_style))
+
+    story.append(Paragraph("<b>4.2 Sektor Sosial &amp; Pengawas</b>", h2_style))
+    story.append(Paragraph("• <b>BAZNAS &amp; LAZ:</b> Lembaga pengelola Zakat, Infak, dan Sedekah (ZIS).<br/>"
+                           "• <b>BWI (Badan Wakaf Indonesia):</b> Pengelola dan pembina aset wakaf produktif.<br/>"
+                           "• <b>DSN-MUI &amp; DPS:</b> Pembuat fatwa syariah dan pengawas operasional di lembaga keuangan.", body_style))
+
+    # =========================================================================
+    # BAB V
+    # =========================================================================
+    story.append(Paragraph("BAB V: GLOSARIUM AKAD DAN ISTILAH", h1_style))
+    story.append(Paragraph("<b>5.1 Glosarium Akad</b>", h2_style))
+    story.append(Paragraph("• <b>Murabahah:</b> Akad jual beli barang sebesar harga pokok ditambah margin keuntungan yang disepakati.<br/>"
+                           "• <b>Mudharabah:</b> Kerjasama 100% modal dari pemilik (<i>Shahibul Maal</i>) dan pengelola (<i>Mudharib</i>).<br/>"
+                           "• <b>Musyarakah:</b> Kemitraan di mana dua pihak atau lebih sama-sama menyertakan modal dan usaha.<br/>"
+                           "• <b>Ijarah &amp; IMBT:</b> Akad sewa-menyawa manfaat barang/jasa, dapat diakhiri pemindahan kepemilikan (IMBT).<br/>"
+                           "• <b>Salam &amp; Istishna':</b> Jual beli pemesanan barang (Salam: bayar tunai di awal; Istishna': bayar bertahap).<br/>"
+                           "• <b>Wadiah:</b> Akad penitipan dana yang dijamin dapat ditarik sewaktu-waktu.<br/>"
+                           "• <b>Qardhul Hasan:</b> Pinjaman murni tanpa bunga/tambahan untuk tujuan sosial/kebaikan.", body_style))
+
+    story.append(Paragraph("<b>5.2 Istilah Keuangan</b>", h2_style))
+    story.append(Paragraph("• <b>Nisbah:</b> Rasio persentase pembagian keuntungan.<br/>"
+                           "• <b>Tabarru':</b> Dana hibah/sumbangan sukarela untuk tolong-menolong.<br/>"
+                           "• <b>Nishab &amp; Haul:</b> Batas minimum jumlah harta dan kriteria masa kepemilikan 1 tahun untuk zakat.<br/>"
+                           "• <b>Sukuk:</b> Sertifikat bukti kepemilikan atas aset riil (<i>underlying asset</i>).", body_style))
+
+    # Build Document dengan penomoran halaman otomatis
+    doc.build(story, canvasmaker=NumberedCanvas)
+    print("PDF Berhasil Dibuat!")
+
+if __name__ == "__main__":
+    generate_pdf()
