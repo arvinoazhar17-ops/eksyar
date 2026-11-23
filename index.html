@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Suara ke Teks</title>
+<style>
+:root{--bg:#f6f5fb;--card:rgba(255,255,255,.78);--text:#1b1a2e;--mute:#6b6a80;--line:rgba(27,26,46,.09);--soft:rgba(99,102,241,.08);--g:linear-gradient(135deg,#7c3aed,#2563eb);--g2:linear-gradient(135deg,#ec4899,#7c3aed);--shadow:0 10px 40px -12px rgba(76,29,149,.25);color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0d0c17;--card:rgba(30,29,48,.7);--text:#f1f0fb;--mute:#9a99b3;--line:rgba(255,255,255,.08);--soft:rgba(139,92,246,.14);--shadow:0 10px 40px -12px rgba(0,0,0,.6);color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0d0c17;--card:rgba(30,29,48,.7);--text:#f1f0fb;--mute:#9a99b3;--line:rgba(255,255,255,.08);--soft:rgba(139,92,246,.14);--shadow:0 10px 40px -12px rgba(0,0,0,.6);color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--text);font:16px/1.6 "Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;min-height:100vh;
+background-image:radial-gradient(600px 400px at 10% -5%,rgba(124,58,237,.22),transparent 60%),radial-gradient(500px 380px at 95% 5%,rgba(37,99,235,.20),transparent 60%),radial-gradient(500px 400px at 50% 105%,rgba(236,72,153,.14),transparent 60%);background-attachment:fixed;
+padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}
+main{max-width:680px;margin:0 auto;padding:36px 18px 72px}
+header{text-align:center;margin-bottom:28px}
+.logo{width:52px;height:52px;border-radius:16px;background:var(--g);display:grid;place-items:center;margin:0 auto 14px;box-shadow:0 12px 28px -8px rgba(124,58,237,.6)}
+.logo svg{width:26px;height:26px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+h1{font-size:28px;font-weight:750;letter-spacing:-.02em;margin:0 0 6px}
+h1 span{background:var(--g);-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{color:var(--mute);margin:0;font-size:15px}
+.card{background:var(--card);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid var(--line);border-radius:24px;padding:22px;box-shadow:var(--shadow);margin-bottom:18px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:18px}
+.seg{display:inline-flex;background:var(--soft);padding:4px;border-radius:14px;gap:2px}
+.seg button{border:0;background:transparent;color:var(--mute);font:inherit;font-size:14px;font-weight:600;padding:8px 16px;border-radius:10px;cursor:pointer;transition:.2s}
+.seg button.on{background:var(--card);color:var(--text);box-shadow:0 2px 8px rgba(0,0,0,.1)}
+select{font:inherit;font-size:14px;background:var(--soft);color:var(--text);border:0;border-radius:12px;padding:9px 12px;cursor:pointer}
+.panel{display:none}.panel.on{display:block}
+/* rekam */
+.mic{display:flex;flex-direction:column;align-items:center;gap:16px;padding:14px 0 6px}
+.micwrap{position:relative;width:104px;height:104px}
+.micwrap:before,.micwrap:after{content:"";position:absolute;inset:0;border-radius:50%;background:var(--g);opacity:0}
+.micwrap.on:before{animation:ring 1.8s infinite}.micwrap.on:after{animation:ring 1.8s .9s infinite}
+@keyframes ring{0%{transform:scale(1);opacity:.45}100%{transform:scale(1.9);opacity:0}}
+.micbtn{position:relative;z-index:1;width:104px;height:104px;border-radius:50%;border:0;background:var(--g);cursor:pointer;display:grid;place-items:center;box-shadow:0 16px 36px -10px rgba(124,58,237,.7);transition:transform .15s}
+.micbtn:active{transform:scale(.95)}
+.micwrap.on .micbtn{background:var(--g2)}
+.micbtn svg{width:40px;height:40px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.bars{display:flex;gap:4px;height:22px;align-items:center}
+.bars i{width:4px;height:6px;border-radius:2px;background:var(--g);opacity:.35}
+.on~.bars i,.bars.on i{opacity:1;animation:bar .9s infinite ease-in-out}
+.bars i:nth-child(2){animation-delay:.12s!important}.bars i:nth-child(3){animation-delay:.24s!important}.bars i:nth-child(4){animation-delay:.36s!important}.bars i:nth-child(5){animation-delay:.48s!important}
+@keyframes bar{50%{height:22px}}
+.hint{color:var(--mute);font-size:14px;margin:0}
+/* unggah */
+.drop input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:0}
+.drop{position:relative;display:block;width:100%;border:2px dashed var(--line);border-radius:20px;padding:34px 18px;text-align:center;cursor:pointer;transition:.2s;background:var(--soft)}
+.drop.over,.drop:hover{border-color:#7c3aed;background:rgba(124,58,237,.12)}
+.drop b{display:block;font-size:17px;margin-bottom:4px}
+.drop svg{display:block;margin-left:auto;margin-right:auto;width:34px;height:34px;stroke:#7c3aed;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;margin-bottom:8px}
+.drop small{color:var(--mute)}
+.prog{margin-top:16px}.prog p{margin:0 0 8px;font-size:14px;color:var(--mute)}
+.track{height:8px;border-radius:99px;background:var(--soft);overflow:hidden}
+.fill{height:100%;width:0;background:var(--g);border-radius:99px;transition:width .2s}
+.fill.ind{width:40%;animation:ind 1.2s infinite ease-in-out}
+@keyframes ind{0%{margin-left:-40%}100%{margin-left:100%}}
+.hide{display:none!important}
+/* hasil */
+.tabs{display:flex;gap:6px;margin-bottom:16px}
+.tabs button{flex:1;border:1px solid var(--line);background:transparent;color:var(--mute);font:inherit;font-weight:650;font-size:15px;padding:11px;border-radius:14px;cursor:pointer;transition:.2s}
+.tabs button.on{background:var(--g);color:#fff;border-color:transparent;box-shadow:0 8px 20px -8px rgba(124,58,237,.7)}
+textarea{width:100%;min-height:240px;border:0;outline:0;resize:vertical;background:transparent;color:var(--text);font:inherit;line-height:1.75;font-size:16px}
+textarea::placeholder{color:var(--mute)}
+.interim{color:var(--mute);min-height:1.5em;font-size:15px}
+.row{display:flex;gap:8px;justify-content:space-between;align-items:center;margin-top:14px;flex-wrap:wrap}
+.ghost{background:var(--soft);border:0;color:var(--text);border-radius:12px;padding:9px 16px;font:inherit;font-size:14px;font-weight:600;cursor:pointer}
+.ghost:hover{filter:brightness(.96)}
+.stats{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap}
+.stat{background:var(--soft);border-radius:99px;padding:5px 13px;font-size:13px;color:var(--mute);font-weight:600}
+.points{list-style:none;margin:0;padding:0;counter-reset:n}
+.points li{counter-increment:n;display:flex;gap:14px;padding:16px 0;border-top:1px solid var(--line);font-size:17px;line-height:1.65}
+.points li:first-child{border-top:0;padding-top:2px}
+.points li:before{content:counter(n);flex:none;width:28px;height:28px;border-radius:9px;background:var(--g);color:#fff;font-size:13px;font-weight:700;display:grid;place-items:center;margin-top:2px}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;padding-top:18px;border-top:1px solid var(--line)}
+.chip{background:var(--soft);border-radius:99px;padding:5px 13px;font-size:13px;font-weight:600}
+.empty{color:var(--mute);text-align:center;padding:40px 0}
+.note{color:var(--mute);font-size:13px;text-align:center;margin:0}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="logo"><svg viewBox="0 0 24 24"><path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3z"/><path d="M19 11a7 7 0 0 1-14 0M12 18v3"/></svg></div>
+    <h1>Suara ke <span>Teks</span></h1>
+    <p class="sub">Rekam atau unggah audio, dapat transkrip dan rangkuman.</p>
+  </header>
+
+  <section class="card">
+    <div class="top">
+      <div class="seg" id="mode"><button class="on" data-m="rec">Rekam</button><button data-m="up">Unggah audio</button></div>
+      <select id="lang" aria-label="Bahasa"><option value="id-ID">Indonesia</option><option value="en-US">English</option></select>
+    </div>
+
+    <div class="panel on" id="pRec">
+      <div class="mic">
+        <div class="micwrap" id="wrap"><button class="micbtn" id="rec" aria-label="Rekam"><svg viewBox="0 0 24 24"><path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3z"/><path d="M19 11a7 7 0 0 1-14 0M12 18v3"/></svg></button></div>
+        <div class="bars" id="bars"><i></i><i></i><i></i><i></i><i></i></div>
+        <p class="hint" id="recHint">Ketuk untuk mulai merekam</p>
+      </div>
+    </div>
+
+    <div class="panel" id="pUp">
+      <label class="drop" id="drop">
+        <svg viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
+        <b>Pilih atau seret file audio</b>
+        <small>MP3, WAV, M4A, OGG, WEBM</small>
+        <input type="file" id="file" accept="audio/*,video/mp4,video/webm,.mp3,.wav,.m4a,.ogg,.webm">
+      </label>
+      <div class="row" style="margin-top:14px"><span class="hint">Akurasi</span>
+        <select id="model"><option value="Xenova/whisper-tiny">Cepat</option><option value="Xenova/whisper-base" selected>Seimbang</option><option value="Xenova/whisper-small">Akurat (lebih lambat)</option></select></div>
+      <div class="prog hide" id="prog"><p id="status"></p><div class="track"><div class="fill" id="fill"></div></div>
+        <button class="ghost hide" id="alt" style="margin-top:14px">Cara cadangan: putar file, dengarkan lewat mikrofon</button></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="tabs"><button id="t1" class="on">Transkrip</button><button id="t2">Rangkuman</button></div>
+
+    <div id="p1">
+      <textarea id="text" placeholder="Transkrip muncul di sini. Kamu juga bisa mengetik atau menempel teks."></textarea>
+      <div class="interim" id="interim"></div>
+      <div class="row"><button class="ghost" id="clear">Hapus</button><button class="ghost" id="copy">Salin</button></div>
+    </div>
+
+    <div id="p2" class="hide">
+      <div class="row" style="margin:0 0 16px"><div class="stats" id="stats" style="margin:0"></div>
+        <div class="seg" id="seg"><button data-n="2">Singkat</button><button data-n="4" class="on">Sedang</button></div></div>
+      <div id="out"></div>
+      <div class="row" id="sumActions"><span></span><button class="ghost" id="copySum">Salin rangkuman</button></div>
+    </div>
+  </section>
+  <p class="note" id="note"></p>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+const text = $("text"), interim = $("interim"), note = $("note");
+let rec = null, on = false, n = 4;
+
+/* ---------- Tab & mode ---------- */
+function tab(i){
+  $("p1").classList.toggle("hide", i!==1); $("p2").classList.toggle("hide", i!==2);
+  $("t1").classList.toggle("on", i===1); $("t2").classList.toggle("on", i===2);
+  if(i===2) summarize();
+}
+$("t1").onclick = () => tab(1); $("t2").onclick = () => tab(2);
+$("mode").onclick = e => {
+  const b = e.target.closest("button"); if(!b) return;
+  [...$("mode").children].forEach(x => x.classList.toggle("on", x===b));
+  $("pRec").classList.toggle("on", b.dataset.m==="rec"); $("pUp").classList.toggle("on", b.dataset.m==="up");
+  if(on) stop();
+};
+
+/* ---------- Rekam langsung ---------- */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+if(!SR){ $("rec").disabled = true; $("rec").style.opacity = .4; $("recHint").textContent = "Browser ini belum mendukung rekam langsung. Coba Chrome atau Safari, atau unggah file audio."; }
+function start(){
+  rec = new SR(); rec.lang = $("lang").value; rec.continuous = true; rec.interimResults = true;
+  rec.onresult = e => {
+    let tmp = "";
+    for(let i = e.resultIndex; i < e.results.length; i++){
+      const t = e.results[i][0].transcript;
+      if(e.results[i].isFinal) text.value = (text.value + " " + t).replace(/\s+/g," ").trim() + " "; else tmp += t;
+    }
+    interim.textContent = tmp;
+  };
+  rec.onerror = e => { if(e.error === "not-allowed"){ stop(); note.textContent = "Izin mikrofon ditolak. Aktifkan di pengaturan browser."; } };
+  rec.onend = () => { if(on){ try{ rec.start(); }catch(_){} } };
+  try{ rec.start(); on = true; ui(); note.textContent = ""; }catch(_){}
+}
+function stop(){ on = false; if(rec){ try{ rec.stop(); }catch(_){} } interim.textContent = ""; ui(); }
+function ui(){ $("wrap").classList.toggle("on", on); $("bars").classList.toggle("on", on); $("recHint").textContent = on ? "Mendengarkan… ketuk untuk berhenti" : "Ketuk untuk mulai merekam"; }
+$("rec").onclick = () => on ? stop() : start();
+$("lang").onchange = () => { if(on){ stop(); start(); } };
+
+/* ---------- Unggah file audio (Whisper berjalan di browser) ---------- */
+const drop = $("drop"), file = $("file");
+["dragenter","dragover"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add("over"); }));
+["dragleave","drop"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove("over"); }));
+drop.addEventListener("drop", e => { if(e.dataTransfer.files[0]) transcribe(e.dataTransfer.files[0]); });
+file.onchange = () => { if(file.files[0]) transcribe(file.files[0]); file.value = ""; };
+
+function status(msg, pct){
+  $("prog").classList.remove("hide"); $("status").textContent = msg;
+  const f = $("fill"); f.classList.toggle("ind", pct == null);
+  if(pct != null) f.style.width = Math.max(0, Math.min(100, pct)) + "%";
+}
+let asr = null, asrKey = "";
+async function loadModel(name){
+  if(asr && asrKey === name) return asr;
+  status("Memuat model (sekali saja, lalu tersimpan di browser)…", 0);
+  const { pipeline, env } = await import("https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.0.2");
+  env.allowLocalModels = false;
+  asr = await pipeline("automatic-speech-recognition", name, {
+    progress_callback: p => { if(p.status === "progress") status("Mengunduh model… " + Math.round(p.progress) + "%", p.progress); }
+  });
+  asrKey = name; return asr;
+}
+async function toMono16k(f){
+  const buf = await f.arrayBuffer();
+  const Ctx = window.AudioContext || window.webkitAudioContext;
+  const ctx = new Ctx(); const dec = await ctx.decodeAudioData(buf); ctx.close();
+  const len = Math.ceil(dec.duration * 16000);
+  const off = new OfflineAudioContext(1, len, 16000);
+  const src = off.createBufferSource(); src.buffer = dec; src.connect(off.destination); src.start();
+  return (await off.startRendering()).getChannelData(0);
+}
+let lastFile = null;
+$("alt").onclick = () => {
+  if(!lastFile || !SR){ status("Cara cadangan butuh Chrome atau Safari dengan izin mikrofon.", 0); return; }
+  tab(1); const a = new Audio(URL.createObjectURL(lastFile));
+  start(); a.play().catch(() => status("File tidak bisa diputar. Coba format MP3 atau WAV.", 0));
+  status("Memutar file… naikkan volume speaker dan jangan pakai headset.", null);
+  a.onended = () => setTimeout(() => { stop(); status("Selesai.", 100); }, 1500);
+};
+async function transcribe(f){
+  lastFile = f; $("alt").classList.add("hide");
+  try{
+    status("File dipilih: " + f.name + ". Membaca audio…");
+    const audio = await toMono16k(f);
+    const m = await loadModel($("model").value);
+    status("Mentranskrip… file panjang bisa memakan beberapa menit.");
+    const lang = $("lang").value === "id-ID" ? "indonesian" : "english";
+    const r = await m(audio, { language: lang, task: "transcribe", chunk_length_s: 30, stride_length_s: 5 });
+    text.value = ((text.value + " " + r.text).trim()) + " ";
+    status("Selesai.", 100); tab(1);
+    setTimeout(() => $("prog").classList.add("hide"), 1800);
+  }catch(err){
+    console.error(err);
+    const why = /decode|EncodingError|audio/i.test(String(err)) ? "Format file audio tidak bisa dibaca browser. Coba ubah ke MP3 atau WAV."
+      : "Model tidak bisa diunduh. Pastikan internet aktif dan halaman dibuka lewat hosting atau localhost, bukan pratinjau di aplikasi.";
+    status("Gagal: " + why + " (" + (err && err.message ? err.message : err) + ")", 0);
+    $("alt").classList.remove("hide");
+  }
+}
+
+/* ---------- Salin & hapus ---------- */
+$("clear").onclick = () => { text.value = ""; interim.textContent = ""; };
+async function copy(s, btn){
+  try{ await navigator.clipboard.writeText(s); const o = btn.textContent; btn.textContent = "Tersalin"; setTimeout(() => btn.textContent = o, 1200); }catch(_){}
+}
+$("copy").onclick = e => copy(text.value, e.target);
+
+/* ---------- Rangkuman (dibuat di browser) ---------- */
+const STOP = new Set(("yang dan di ke dari untuk pada dengan ini itu atau juga akan sudah telah adalah ada tidak bisa dapat karena sebagai dalam oleh saya kamu kita kami mereka dia nya lebih sangat seperti jadi kalau agar supaya sama saja lagi sih ya the a an and of to in is it that for on with as was are be this at by from or have has not but we you they").split(" "));
+const words = s => (s.toLowerCase().match(/[a-zà-ÿ0-9]+/g) || []);
+function sentences(t){
+  let s = t.split(/(?<=[.!?])\s+|\n+/).map(x => x.trim()).filter(Boolean);
+  if(s.length < 3 && words(t).length > 40){
+    const w = t.trim().split(/\s+/); s = [];
+    for(let i = 0; i < w.length; i += 20) s.push(w.slice(i, i + 20).join(" "));
+  }
+  return s;
+}
+function summarize(){
+  const t = text.value.trim(), out = $("out"), nw = words(t).length;
+  if(nw < 15){
+    out.innerHTML = '<div class="empty">Rangkuman akan muncul setelah ada cukup teks.</div>';
+    $("stats").innerHTML = ""; $("sumActions").classList.add("hide"); return;
+  }
+  $("sumActions").classList.remove("hide");
+  const S = sentences(t), freq = {};
+  words(t).forEach(w => { if(!STOP.has(w) && w.length > 2) freq[w] = (freq[w] || 0) + 1; });
+  const scored = S.map((s, i) => {
+    const w = words(s).filter(x => !STOP.has(x));
+    return { s, i, sc: w.reduce((a, x) => a + (freq[x] || 0), 0) / Math.sqrt(w.length || 1) };
+  });
+  const k = Math.min(S.length, n);
+  const pick = scored.slice().sort((a, b) => b.sc - a.sc).slice(0, k).sort((a, b) => a.i - b.i);
+  const cap = x => x.charAt(0).toUpperCase() + x.slice(1);
+  const esc = x => x.replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+  const keys = Object.entries(freq).sort((a, b) => b[1] - a[1]).slice(0, 6).map(e => e[0]);
+  $("stats").innerHTML = '<span class="stat">' + nw + ' kata</span><span class="stat">±' + Math.max(1, Math.round(nw / 200)) + ' menit baca</span>';
+  out.innerHTML = '<ul class="points">' + pick.map(p => "<li><span>" + esc(cap(p.s.replace(/[.\s]+$/, ""))) + ".</span></li>").join("") + "</ul>"
+    + (keys.length ? '<div class="chips">' + keys.map(x => '<span class="chip">' + esc(x) + "</span>").join("") + "</div>" : "");
+  out.dataset.plain = pick.map(p => "• " + cap(p.s.replace(/[.\s]+$/, "")) + ".").join("\n");
+}
+$("seg").onclick = e => {
+  const b = e.target.closest("button"); if(!b) return;
+  n = +b.dataset.n; [...$("seg").children].forEach(x => x.classList.toggle("on", x === b)); summarize();
+};
+$("copySum").onclick = e => copy($("out").dataset.plain || "", e.target);
+</script>
+</body>
+</html>
